@@ -129,6 +129,12 @@ local function updateEntryUI(entry)
 end
 
 local function createEntry(player)
+    for _, existing in ipairs(trackedEntries) do
+        if existing.Player == player then
+            return
+        end
+    end
+
     local entry = {
         Player = player,
         ExitCount = 0,
@@ -273,27 +279,18 @@ AddButton.MouseButton1Click:Connect(function()
         return
     end
 
-    local found
+    local added = 0
     for _, p in ipairs(Players:GetPlayers()) do
         if p.Name:lower():sub(1, #partial) == partial then
-            found = p
-            break
+            createEntry(p)
+            added = added + 1
         end
     end
 
-    if not found then
+    if added == 0 then
         StatusLabel.Text = "غير موجود"
-        return
+    else
+        StatusLabel.Text = "تم: " .. added
     end
-
-    for _, entry in ipairs(trackedEntries) do
-        if entry.Player == found then
-            StatusLabel.Text = "مسجل"
-            return
-        end
-    end
-
-    createEntry(found)
-    StatusLabel.Text = "تم"
     Input.Text = ""
 end)
