@@ -128,6 +128,18 @@ local function updateEntryUI(entry)
     entry.TimerLabel.Text = "وقت: " .. formatTime(entry.TotalTime)
 end
 
+local function removeEntry(entry)
+    if entry.CharAddedConn then entry.CharAddedConn:Disconnect() end
+    if entry.CharRemovingConn then entry.CharRemovingConn:Disconnect() end
+    if entry.GuiFrame then entry.GuiFrame:Destroy() end
+    for i, e in ipairs(trackedEntries) do
+        if e == entry then
+            table.remove(trackedEntries, i)
+            break
+        end
+    end
+end
+
 local function createEntry(player)
     for _, existing in ipairs(trackedEntries) do
         if existing.Player == player then
@@ -144,7 +156,6 @@ local function createEntry(player)
         LastTick = 0,
         CharAddedConn = nil,
         CharRemovingConn = nil,
-        PlayerRemovingConn = nil,
         GuiFrame = nil,
         NameLabel = nil,
         ExitLabel = nil,
@@ -238,19 +249,6 @@ local function createEntry(player)
         updateEntryUI(entry)
     end)
 
-    entry.PlayerRemovingConn = player.Removing:Connect(function()
-        if entry.CharAddedConn then entry.CharAddedConn:Disconnect() end
-        if entry.CharRemovingConn then entry.CharRemovingConn:Disconnect() end
-        if entry.PlayerRemovingConn then entry.PlayerRemovingConn:Disconnect() end
-        entry.GuiFrame:Destroy()
-        for i, e in ipairs(trackedEntries) do
-            if e == entry then
-                table.remove(trackedEntries, i)
-                break
-            end
-        end
-    end)
-
     if player.Character then
         entry.EntryCount = 1
         entry.IsInside = true
@@ -260,6 +258,15 @@ local function createEntry(player)
 
     table.insert(trackedEntries, entry)
 end
+
+Players.PlayerRemoving:Connect(function(player)
+    for _, entry in ipairs(trackedEntries) do
+        if entry.Player == player then
+            removeEntry(entry)
+            break
+        end
+    end
+end)
 
 game:GetService("RunService").Heartbeat:Connect(function()
     for _, entry in ipairs(trackedEntries) do
