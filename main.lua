@@ -280,15 +280,17 @@ game:GetService("RunService").Heartbeat:Connect(function()
 end)
 
 AddButton.MouseButton1Click:Connect(function()
-    local partial = Input.Text:lower()
+    local partial = Input.Text:match("^%s*(.-)%s*$"):lower()
     if #partial < 1 then
         StatusLabel.Text = "ادخل نص"
         return
     end
 
+    local partialLen = utf8.len(partial)
     local added = 0
     for _, p in ipairs(Players:GetPlayers()) do
-        if p.Name:lower():sub(1, #partial) == partial then
+        local nameLower = p.Name:lower()
+        if utf8.sub(nameLower, 1, partialLen) == partial then
             createEntry(p)
             added = added + 1
         end
