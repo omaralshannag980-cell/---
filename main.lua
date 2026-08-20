@@ -75,6 +75,7 @@ ScrollFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 ScrollFrame.BorderColor3 = Color3.fromRGB(0,140,255)
 ScrollFrame.BorderSizePixel = 1
 ScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 ScrollFrame.CanvasSize = UDim2.new(0,0,0,0)
 ScrollFrame.ScrollBarThickness = 8
 ScrollFrame.ClipsDescendants = true
@@ -122,27 +123,6 @@ local function updateEntryUI(entry)
     entry.ExitLabel.Text = "خروج: " .. entry.ExitCount
     entry.EntryLabel.Text = "دخول: " .. entry.EntryCount
     entry.TimerLabel.Text = "وقت: " .. formatTime(entry.TotalTime)
-end
-
-local function updateCanvasSize()
-    local totalHeight = 0
-    for _, _ in ipairs(trackedEntries) do
-        totalHeight = totalHeight + 75 + 5 -- ارتفاع العنصر + المسافة
-    end
-    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
-end
-
-local function removeEntry(entry)
-    if entry.CharAddedConn then entry.CharAddedConn:Disconnect() end
-    if entry.CharRemovingConn then entry.CharRemovingConn:Disconnect() end
-    if entry.GuiFrame then entry.GuiFrame:Destroy() end
-    for i,e in ipairs(trackedEntries) do
-        if e == entry then
-            table.remove(trackedEntries, i)
-            break
-        end
-    end
-    updateCanvasSize()
 end
 
 local function createEntry(player)
@@ -232,7 +212,9 @@ local function createEntry(player)
     local ok, thumbnail = pcall(function()
         return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
     end)
-    if ok and thumbnail then avatar.Image = thumbnail end
+    if ok and thumbnail then
+        avatar.Image = thumbnail
+    end
 
     entry.CharAddedConn = player.CharacterAdded:Connect(function(character)
         entry.EntryCount = entry.EntryCount + 1
@@ -259,13 +241,15 @@ local function createEntry(player)
     end
 
     table.insert(trackedEntries, entry)
-    updateCanvasSize()
 end
 
 Players.PlayerRemoving:Connect(function(player)
-    for _, entry in ipairs(trackedEntries) do
+    for i, entry in ipairs(trackedEntries) do
         if entry.Player == player then
-            removeEntry(entry)
+            if entry.CharAddedConn then entry.CharAddedConn:Disconnect() end
+            if entry.CharRemovingConn then entry.CharRemovingConn:Disconnect() end
+            if entry.GuiFrame then entry.GuiFrame:Destroy() end
+            table.remove(trackedEntries, i)
             break
         end
     end
